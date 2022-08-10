@@ -7,19 +7,19 @@ export const detect = ({
     drawRectangle = false,
     scanElement,
     resultElement,
-    img: { height = 640, width = 480 },
-    contourColor: { r = 255, g = 255, b = 255 },
+    img = { height: 640, width: 480 },
+    contourColor = { r: 255, g: 255, b: 255 },
 }: {
     detectElement: HTMLImageElement | HTMLCanvasElement;
     scanElement?: HTMLCanvasElement;
     resultElement: HTMLCanvasElement;
     drawRectangle?: boolean;
     showContours?: boolean;
-    img: {
-        height?: number;
-        width?: number;
+    img?: {
+        height: number;
+        width: number;
     };
-    contourColor: { r?: number; g?: number; b?: number };
+    contourColor?: { r: number; g: number; b: number };
 }) => {
     let frame = cv.imread(detectElement);
     let imageGray = new cv.Mat();
@@ -38,12 +38,12 @@ export const detect = ({
 
     let biggestContour = findBigestContour(imageCountours);
     if (biggestContour) {
-        if (showContours) cv.drawContours(frame, biggestContour, -1, [0, r, g, b], 1);
+        if (showContours) cv.drawContours(frame, biggestContour, -1, [0, contourColor.r, contourColor.g, contourColor.b], 1);
         const rectanglePoints = reorderContourToSquarePoints(biggestContour);
         const thickness = 2;
         if (rectanglePoints.length === 4) {
             if (drawRectangle) drawRect(frame, rectanglePoints, thickness);
-            let wrapedImage = wrapImage(frame, rectanglePoints, width, height);
+            let wrapedImage = wrapImage(frame, rectanglePoints, img.width, img.height);
             wrapedImage && scanElement && cv.imshow(scanElement, wrapedImage);
             wrapedImage.delete();
         }
@@ -103,8 +103,9 @@ export const detectVideo = async ({
     let imageDilated = new cv.Mat();
     let imageCountours = new cv.MatVector();
     let imageHierarchy = new cv.Mat();
-    let timeout: number;
+    let timeout: null | ReturnType<typeof setTimeout> = null;
     let biggestContour: any | undefined;
+
     function processVideo() {
         let begin = Date.now();
         if (!videoStream.active) {
@@ -150,7 +151,7 @@ export const detectVideo = async ({
             imageGray.delete();
             frame.delete();
             videoStream.getTracks().forEach((track) => track.stop());
-            clearTimeout(timeout);
+            timeout != null && clearTimeout(timeout);
         },
     };
 };
