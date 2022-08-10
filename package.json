@@ -1,0 +1,22 @@
+{
+    "name": "document-scanner-opencv",
+    "version": "1.0.0",
+    "description": "Document Scanner made in OpenCV ",
+    "main": "index.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/matheustavarestrindade/Document-Scanner-OpenCV.git"
+    },
+    "author": "Matheus Tavares Trindade",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/matheustavarestrindade/Document-Scanner-OpenCV/issues"
+    },
+    "homepage": "https://github.com/matheustavarestrindade/Document-Scanner-OpenCV#readme",
+    "dependencies": {
+        "@techstark/opencv-js": "^4.6.0-release.1"
+    }
+}
