@@ -1,15 +1,6 @@
 import { drawRectangle as drawRect, findBigestContour, findLowest, findMax, Point, reorderContourToSquarePoints, wrapImage } from "./Utilities";
-import cv from "@techstark/opencv-js";
 
-export const detect = ({
-    detectElement,
-    showContours = false,
-    drawRectangle = false,
-    scanElement,
-    resultElement,
-    img = { height: 640, width: 480 },
-    contourColor = { r: 255, g: 255, b: 255 },
-}: {
+interface DetectProps {
     detectElement: HTMLImageElement | HTMLCanvasElement;
     scanElement?: HTMLCanvasElement;
     resultElement: HTMLCanvasElement;
@@ -20,9 +11,18 @@ export const detect = ({
         width: number;
     };
     contourColor?: { r: number; g: number; b: number };
-}) => {
+}
+
+export const detect = ({ detectElement, showContours = false, drawRectangle = false, scanElement, resultElement, img, contourColor }: DetectProps) => {
+    if (!img) img = { height: 640, width: 480 };
+    const { width, height } = img;
+    if (!contourColor) contourColor = { r: 255, g: 255, b: 255 };
+    const { r, g, b } = contourColor;
     let frame = cv.imread(detectElement);
     let imageGray = new cv.Mat();
+    let resultFrame = new cv.Mat();
+    let copiedToResultFrame = false;
+
     cv.cvtColor(frame, imageGray, cv.COLOR_RGBA2GRAY);
     let imageBlur = new cv.Mat();
     cv.GaussianBlur(imageGray, imageBlur, { width: 5, height: 5 }, 0);
@@ -38,18 +38,18 @@ export const detect = ({
 
     let biggestContour = findBigestContour(imageCountours);
     if (biggestContour) {
-        if (showContours) cv.drawContours(frame, biggestContour, -1, [0, contourColor.r, contourColor.g, contourColor.b], 1);
+        if (showContours) cv.drawContours(frame, biggestContour, -1, [r, g, b, 0], 1);
         const rectanglePoints = reorderContourToSquarePoints(biggestContour);
         const thickness = 2;
         if (rectanglePoints.length === 4) {
             if (drawRectangle) drawRect(frame, rectanglePoints, thickness);
-            let wrapedImage = wrapImage(frame, rectanglePoints, img.width, img.height);
-            wrapedImage && scanElement && cv.imshow(scanElement, wrapedImage);
-            wrapedImage.delete();
+            wrapImage(frame, resultFrame, rectanglePoints, width, height);
+            copiedToResultFrame = true;
         }
     }
 
-    resultElement && cv.imshow(resultElement, frame);
+    if (resultElement != undefined && copiedToResultFrame) cv.imshow(resultElement, resultFrame);
+    if (resultElement != undefined && !copiedToResultFrame) cv.imshow(resultElement, frame);
     imageCountours.delete();
     imageHierarchy.delete();
     imageDilated.delete();
@@ -59,44 +59,51 @@ export const detect = ({
     frame.delete();
 };
 
+interface DetectVideoProps {
+    videoDisplayElement: HTMLVideoElement;
+    resultElement?: HTMLCanvasElement;
+    drawRectangle?: boolean;
+    showContours?: boolean;
+    fps?: number;
+    img?: {
+        height: number;
+        width: number;
+    };
+    contourColor?: { r: number; g: number; b: number };
+    onDetect?: (rectanglePoints: Point[]) => void;
+}
+interface DetectVideoReturnProps {
+    stop: () => void;
+}
+
 export const detectVideo = async ({
     videoDisplayElement,
     showContours = false,
     drawRectangle = false,
-    scanElement,
     resultElement,
     onDetect,
     fps = 30,
-    img: { height = 640, width = 480 },
-    contourColor: { r = 255, g = 255, b = 255 },
-}: {
-    videoDisplayElement: HTMLVideoElement;
-    resultElement: HTMLCanvasElement;
-    scanElement?: HTMLCanvasElement;
-    drawRectangle?: boolean;
-    showContours?: boolean;
-    fps?: number;
-    img: {
-        height?: number;
-        width?: number;
-    };
-    contourColor: { r?: number; g?: number; b?: number };
-    onDetect?: (rectanglePoints: Point[]) => void;
-}): Promise<{
-    stop: () => void;
-}> => {
+    img,
+    contourColor,
+}: DetectVideoProps): Promise<DetectVideoReturnProps> => {
+    if (!img) img = { height: 640, width: 480 };
+    const { width, height } = img;
+    if (!contourColor) contourColor = { r: 255, g: 255, b: 255 };
+    const { r, g, b } = contourColor;
     if (!navigator.mediaDevices.getUserMedia) throw new Error("getUserMedia is not supported");
     let videoStream: MediaStream;
     try {
         videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoStream === undefined) throw new Error("videoStream is undefined");
+        videoDisplayElement.srcObject = videoStream;
     } catch (e) {
-        console.log(e);
+        console.log("Error getting user media", e);
     }
 
     const capture = new cv.VideoCapture(videoDisplayElement);
 
     let frame = new cv.Mat(videoDisplayElement.height, videoDisplayElement.width, cv.CV_8UC4);
+    let resultFrame = new cv.Mat();
     let imageGray = new cv.Mat();
     let imageBlur = new cv.Mat();
     let imageThreshold = new cv.Mat();
@@ -105,12 +112,16 @@ export const detectVideo = async ({
     let imageHierarchy = new cv.Mat();
     let timeout: null | ReturnType<typeof setTimeout> = null;
     let biggestContour: any | undefined;
+    let stoped = false;
 
     function processVideo() {
         let begin = Date.now();
-        if (!videoStream.active) {
+        let copiedToResultFrame = false;
+
+        if (stoped) {
             return;
         }
+
         capture.read(frame);
 
         cv.cvtColor(frame, imageGray, cv.COLOR_RGBA2GRAY);
@@ -123,18 +134,16 @@ export const detectVideo = async ({
 
         biggestContour = findBigestContour(imageCountours);
         if (biggestContour) {
-            if (showContours) cv.drawContours(frame, biggestContour, -1, [0, r, g, b], 1);
+            if (showContours) cv.drawContours(frame, biggestContour, -1, [r, g, b, 0], 1);
             const rectanglePoints = reorderContourToSquarePoints(biggestContour);
             const thickness = 2;
             if (rectanglePoints.length === 4) {
                 onDetect && onDetect(rectanglePoints);
                 if (drawRectangle) drawRect(frame, rectanglePoints, thickness);
-                let wrapedImage = wrapImage(frame, rectanglePoints, width, height);
-                wrapedImage && scanElement && cv.imshow(scanElement, wrapedImage);
-                wrapedImage.delete();
             }
         }
-        resultElement && cv.imshow(resultElement, frame);
+
+        if (resultElement != undefined && !copiedToResultFrame) cv.imshow(resultElement, frame);
         let delay = 1000 / fps - (Date.now() - begin);
         setTimeout(processVideo, delay);
     }
@@ -152,6 +161,7 @@ export const detectVideo = async ({
             frame.delete();
             videoStream.getTracks().forEach((track) => track.stop());
             timeout != null && clearTimeout(timeout);
+            stoped = true;
         },
     };
 };

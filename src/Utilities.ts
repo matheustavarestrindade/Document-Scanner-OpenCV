@@ -1,11 +1,9 @@
-import cv from "@techstark/opencv-js";
-
 export interface Point {
     x: number;
     y: number;
 }
 
-export function wrapImage(frame: any, imagePoints: Point[], width: number, height: number) {
+export function wrapImage(frame: any, dst: any, imagePoints: Point[], width: number, height: number) {
     let arr1: number[] = [];
     for (let i = 0; i < imagePoints.length; i++) {
         arr1.push(imagePoints[i].x);
@@ -15,14 +13,12 @@ export function wrapImage(frame: any, imagePoints: Point[], width: number, heigh
     let mat1 = cv.matFromArray(4, 2, cv.CV_32F, arr1);
     let mat2 = cv.matFromArray(4, 2, cv.CV_32F, arr2);
     let perspectiveMatrix = cv.getPerspectiveTransform(mat1, mat2);
-    let wrapedImage = new cv.Mat();
     let size = new cv.Size(width, height);
-    cv.warpPerspective(frame, wrapedImage, perspectiveMatrix, size);
+    cv.warpPerspective(frame, dst, perspectiveMatrix, size);
     mat1.delete();
     mat2.delete();
     perspectiveMatrix.delete();
-    cv.resize(wrapedImage, wrapedImage, size);
-    return wrapedImage;
+    cv.resize(dst, dst, size);
 }
 
 export function reorderContourToSquarePoints(contours: any): Point[] {

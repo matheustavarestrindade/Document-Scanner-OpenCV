@@ -1,19 +1,15 @@
 {
     "compilerOptions": {
-        "target": "es5",
-        "lib": ["dom", "dom.iterable", "esnext"],
+        "incremental": true /* Enable incremental compilation */,
+        "lib": ["es5", "es6", "dom"],
         "allowJs": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "strict": true,
-        "forceConsistentCasingInFileNames": true,
-        "noFallthroughCasesInSwitch": true,
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true
+        "target": "es5" /* Specify ECMAScript target version: */,
+        "module": "commonjs" /* 'none', 'commonjs', 'amd', 'system', etc */,
+        "declaration": true /* Concatenate & emit output to single file.*/,
+        "outDir": "lib" /* Redirect output to the directory. */,
+        "esModuleInterop": true /* Enables intero between CommonJS and ES */,
+        "skipLibCheck": true /* Skip type checking of declaration files. */,
+        "forceConsistentCasingInFileNames": true /* Disallow inconsistently */
     },
     "include": ["src"]
 }

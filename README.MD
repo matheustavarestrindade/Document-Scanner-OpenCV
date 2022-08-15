@@ -8,6 +8,8 @@ This module is a simple OpenCV module to scan documents.
 
     npm install --save opencv-scanner
 
+    Import the OpenCV Script from : `https://docs.opencv.org/4.6.0/opencv.js`
+
 ## Usage
 
 ```javascript 
