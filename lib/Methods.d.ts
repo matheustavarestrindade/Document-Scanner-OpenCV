@@ -31,7 +31,7 @@ interface DetectVideoProps {
         g: number;
         b: number;
     };
-    onDetect?: (rectanglePoints: Point[]) => void;
+    onDetect?: (iamgeData: ImageData, rectanglePoints: Point[]) => void;
 }
 interface DetectVideoReturnProps {
     stop: () => void;
