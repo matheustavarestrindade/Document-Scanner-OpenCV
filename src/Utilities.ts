@@ -3,24 +3,6 @@ export interface Point {
     y: number;
 }
 
-export function wrapImage(frame: any, dst: any, imagePoints: Point[], width: number, height: number) {
-    let arr1: number[] = [];
-    for (let i = 0; i < imagePoints.length; i++) {
-        arr1.push(imagePoints[i].x);
-        arr1.push(imagePoints[i].y);
-    }
-    let arr2 = [0, 0, width, 0, 0, height, width, height];
-    let mat1 = cv.matFromArray(4, 2, cv.CV_32F, arr1);
-    let mat2 = cv.matFromArray(4, 2, cv.CV_32F, arr2);
-    let perspectiveMatrix = cv.getPerspectiveTransform(mat1, mat2);
-    let size = new cv.Size(width, height);
-    cv.warpPerspective(frame, dst, perspectiveMatrix, size);
-    mat1.delete();
-    mat2.delete();
-    perspectiveMatrix.delete();
-    cv.resize(dst, dst, size);
-}
-
 export function reorderContourToSquarePoints(contours: any): Point[] {
     const points: Point[] = [];
     const add: number[] = [];

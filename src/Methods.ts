@@ -1,4 +1,4 @@
-import { drawRectangle as drawRect, findBigestContour, findLowest, findMax, Point, reorderContourToSquarePoints, wrapImage } from "./Utilities";
+import { drawRectangle as drawRect, findBigestContour, findLowest, findMax, Point, reorderContourToSquarePoints } from "./Utilities";
 
 interface DetectProps {
     detectElement: HTMLImageElement | HTMLCanvasElement;
@@ -65,7 +65,7 @@ interface DetectVideoProps {
         width: number;
     };
     contourColor?: { r: number; g: number; b: number };
-    onDetect?: (rectanglePoints: Point[]) => void;
+    onDetect?: (iamgeData: ImageData, rectanglePoints: Point[]) => void;
 }
 interface DetectVideoReturnProps {
     stop: () => void;
@@ -98,6 +98,7 @@ export const detectVideo = async ({
     const capture = new cv.VideoCapture(videoDisplayElement);
 
     let frame = new cv.Mat(videoDisplayElement.height, videoDisplayElement.width, cv.CV_8UC4);
+    let frameCpy;
     let imageGray = new cv.Mat();
     let imageBlur = new cv.Mat();
     let imageThreshold = new cv.Mat();
@@ -117,6 +118,7 @@ export const detectVideo = async ({
         }
 
         capture.read(frame);
+        frameCpy = frame.clone();
 
         cv.cvtColor(frame, imageGray, cv.COLOR_RGBA2GRAY);
         cv.GaussianBlur(imageGray, imageBlur, { width: 5, height: 5 }, 0);
@@ -132,8 +134,12 @@ export const detectVideo = async ({
             const rectanglePoints = reorderContourToSquarePoints(biggestContour);
             const thickness = 2;
             if (rectanglePoints.length === 4) {
-                onDetect && onDetect(rectanglePoints);
                 if (drawRectangle) drawRect(frame, rectanglePoints, thickness);
+                if (typeof onDetect === "function") {
+                    const intArray = new Uint8ClampedArray(frameCpy.data, frameCpy.cols, frameCpy.rows);
+                    const imageData = new ImageData(intArray, frameCpy.cols, frameCpy.rows);
+                    onDetect(imageData, rectanglePoints);
+                }
             }
         }
 
@@ -153,6 +159,7 @@ export const detectVideo = async ({
             imageBlur.delete();
             imageGray.delete();
             frame.delete();
+            frameCpy && frameCpy.delete();
             videoStream.getTracks().forEach((track) => track.stop());
             timeout != null && clearTimeout(timeout);
             stoped = true;

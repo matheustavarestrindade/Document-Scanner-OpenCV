@@ -1,6 +1,6 @@
 {
     "name": "document-scanner-opencv",
-    "version": "1.0.26",
+    "version": "1.0.28",
     "description": "Document Scanner made in OpenCV ",
     "main": "lib/index.js",
     "scripts": {
