@@ -20,8 +20,6 @@ export const detect = ({ detectElement, showContours = false, drawRectangle = fa
     const { r, g, b } = contourColor;
     let frame = cv.imread(detectElement);
     let imageGray = new cv.Mat();
-    let resultFrame = new cv.Mat();
-    let copiedToResultFrame = false;
 
     cv.cvtColor(frame, imageGray, cv.COLOR_RGBA2GRAY);
     let imageBlur = new cv.Mat();
@@ -43,13 +41,10 @@ export const detect = ({ detectElement, showContours = false, drawRectangle = fa
         const thickness = 2;
         if (rectanglePoints.length === 4) {
             if (drawRectangle) drawRect(frame, rectanglePoints, thickness);
-            wrapImage(frame, resultFrame, rectanglePoints, width, height);
-            copiedToResultFrame = true;
         }
     }
 
-    if (resultElement != undefined && copiedToResultFrame) cv.imshow(resultElement, resultFrame);
-    if (resultElement != undefined && !copiedToResultFrame) cv.imshow(resultElement, frame);
+    cv.imshow(resultElement, frame);
     imageCountours.delete();
     imageHierarchy.delete();
     imageDilated.delete();
@@ -103,7 +98,6 @@ export const detectVideo = async ({
     const capture = new cv.VideoCapture(videoDisplayElement);
 
     let frame = new cv.Mat(videoDisplayElement.height, videoDisplayElement.width, cv.CV_8UC4);
-    let resultFrame = new cv.Mat();
     let imageGray = new cv.Mat();
     let imageBlur = new cv.Mat();
     let imageThreshold = new cv.Mat();
