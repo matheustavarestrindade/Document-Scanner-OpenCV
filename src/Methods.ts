@@ -156,6 +156,7 @@ export const detectVideo = async ({
             imageGray.delete();
             frame.delete();
             videoStream.getTracks().forEach((track) => track.stop());
+            videoDisplayElement.srcObject = null;
             timeout != null && clearTimeout(timeout);
             stoped = true;
         },
